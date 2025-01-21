@@ -1,0 +1,14 @@
+#!/usr/bin/expect -f
+set timeout 600
+set arg1 [lindex $argv 0];
+
+spawn ssh -o StrictHostKeyChecking=no rtp99@$arg1
+expect "*assword*" { send "******\n" }
+expect "*$*" { send "mkdir servlet_logs\n" }
+expect "*$*" { send "chmod 755 servlet_logs\n" }
+expect "*$*" { send "cd servlet_logs\n" }
+expect "*$*" { send "mkdir success_logs\n" }
+expect "*$*" { send "mkdir failure_logs\n" }
+expect "*$*" { send "chmod 755 *\n" }
+expect "*$*" { send "exit\n" }
+expect eof
