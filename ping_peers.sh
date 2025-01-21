@@ -1,7 +1,7 @@
 #!/bin/bash
 
 date
-cat /path/to/PeerElements.txt |  while read output
+cat /path/to/servers |  while read output
 do
     ping -c 1 "$output" > /dev/null
     if [ $? -eq 0 ]; then
