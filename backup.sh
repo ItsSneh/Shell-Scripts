@@ -1,21 +1,46 @@
 #!/bin/bash
 
-# This script takes a backup of a directory and stores on a remote backup server
-# Note: Create a public key and copy it to remote server for passwordless authentication before executing the script
+# This script takes a backup of a directory and stores it on a remote backup server.
+# Note: Ensure SSH key-based authentication is set up before using this script.
 
-# Define variables
+# === Configuration ===
 SOURCE_DIR="/var/www/html"
 BACKUP_DIR="/backup"
-ARCHIVE_NAME="html_backup.zip"
-REMOTE_USER="sneh" 
+DATE=$(date +"%Y-%m-%d_%H-%M-%S")
+ARCHIVE_NAME="html_backup_$DATE.zip"
+REMOTE_USER="sneh"
 REMOTE_HOST="my-backup-server"
 REMOTE_PATH="/backup/"
 
-# Create the zip archive
-zip -r "$BACKUP_DIR/$ARCHIVE_NAME" "$SOURCE_DIR"
+# === Validate source directory ===
+if [ ! -d "$SOURCE_DIR" ]; then
+    echo "Error: Source directory '$SOURCE_DIR' does not exist."
+    exit 1
+fi
 
-# Copy the archive to Nautilus Backup Server
+# === Create backup directory if not exists ===
+mkdir -p "$BACKUP_DIR"
+
+# === Create the zip archive ===
+echo "Creating backup of $SOURCE_DIR..."
+zip -r "$BACKUP_DIR/$ARCHIVE_NAME" "$SOURCE_DIR" > /dev/null
+
+if [ $? -ne 0 ]; then
+    echo "Error: Failed to create archive."
+    exit 1
+fi
+
+# === Transfer backup to remote server ===
+echo "Transferring backup to $REMOTE_USER@$REMOTE_HOST:$REMOTE_PATH ..."
 scp "$BACKUP_DIR/$ARCHIVE_NAME" "$REMOTE_USER@$REMOTE_HOST:$REMOTE_PATH"
 
-# Remove the temporary archive on current server after successful copy (Optional)
-rm "$BACKUP_DIR/$ARCHIVE_NAME"
+if [ $? -eq 0 ]; then
+    echo "✅ Backup successful: $BACKUP_DIR/$ARCHIVE_NAME"
+    
+    # Optionally delete local archive
+    # Uncomment the line below if you want to remove the local copy after transfer
+    # rm -f "$BACKUP_DIR/$ARCHIVE_NAME"
+else
+    echo "Backup transfer failed!"
+    exit 1
+fi
